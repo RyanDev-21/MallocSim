@@ -78,7 +78,7 @@ void chunk_list_dump(const ChunkList *list) {
            list->chunks[i].size);
   }
 }
-
+// somehow the unimgable things are happening here
 void chunk_list_merge(ChunkList *list) {
   for (size_t i = 0; i < list->count - 1; i++) {
     Chunk *chunk_1 = list->chunks[i].start;
