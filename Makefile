@@ -1,10 +1,10 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -std=c11 -pedantic -ggdb
+CFLAGS=-Wall -Wextra -Werror -std=c11 -pedantic -ggdb
 
-heap : main.c
-	@$(CC) $(CFLAGS) -o heap main.c
-run : main.c
-	@$(CC) $(CFLAGS) -o heap main.c && ./heap
+heap : main.c heap.c heap.h
+	@$(CC) $(CFLAGS) -o heap main.c heap.c 
+run : main.c heap.c heap.h
+	@$(CC) $(CFLAGS) -o heap main.c heap.c  && ./heap
 
 clean: 
-	rm -rf heap
+	@rm -rf heap
