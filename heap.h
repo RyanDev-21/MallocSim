@@ -1,10 +1,11 @@
 #ifndef HEAP_H
 #define HEAP_H
 #include <assert.h>
+#include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #define HEAP_CAP_BYTES 64000
 static_assert(HEAP_CAP_BYTES % sizeof(uintptr_t) == 0,
               "The heap cap is not divisible by the pointer size");
@@ -18,7 +19,8 @@ static_assert(HEAP_CAP_BYTES % sizeof(uintptr_t) == 0,
   } while (0);
 
 extern uintptr_t heap[HEAP_CAP_WORDS];
-
+extern const uintptr_t *stackAddr;
+extern bool reachable[HEAP_ALLOC_CAP];
 typedef struct {
   uintptr_t *start;
   size_t size;

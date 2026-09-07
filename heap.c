@@ -1,13 +1,12 @@
 #include "heap.h"
 
 uintptr_t heap[HEAP_CAP_WORDS] = {0};
-
+const uintptr_t *stackAddr = 0;
+bool reachable[HEAP_ALLOC_CAP] = {0};
 ChunkList alloc_chunks = {0};
 ChunkList freed_chunks = {.chunks = {{.start = heap, .size = HEAP_CAP_WORDS}},
                           .count = 1};
 
-// WARNING:have to check wether need to change the size to the pointer_size or
-// not
 void chunk_list_insert(ChunkList *list, void *ptr, size_t size) {
   assert(list->count + 1 <= HEAP_ALLOC_CAP);
   Chunk chunk = {.start = ptr, .size = size};
@@ -57,13 +56,13 @@ void chunk_list_remove(ChunkList *list, void *ptr) {
 }
 
 void chunk_list_dump(const ChunkList *list) {
+  printf("\n.......................\n");
   printf("Chunks(%zu):\n", list->count);
   for (size_t i = 0; i < list->count; i++) {
     printf("start:%p, size: %zu\n", (void *)list->chunks[i].start,
            list->chunks[i].size);
   }
 }
-// somehow the unimgable things are happening here
 void chunk_list_merge(ChunkList *list) {
   if (list->count < 2) {
     return;
@@ -114,4 +113,39 @@ void alloc_free(void *ptr) {
     chunk_list_remove(&alloc_chunks, ptr);
     chunk_list_merge(&freed_chunks);
   }
+}
+
+static void mark_region(const uintptr_t *start, const uintptr_t *end) {
+  for (; start < end; start += 1) {
+    uintptr_t *p = (uintptr_t *)*start;
+    for (size_t i = 0; i < alloc_chunks.count; i++) {
+      Chunk chunk = alloc_chunks.chunks[i];
+      if (p >= chunk.start && p <= chunk.start + chunk.size) {
+        if (!reachable[i]) {
+          reachable[i] = true;
+          mark_region(chunk.start, chunk.start + chunk.size);
+        }
+      }
+    }
+  }
+}
+
+void heap_collect() {
+  const uintptr_t *start = (const uintptr_t *)__builtin_frame_address(0);
+  memset(reachable, 0, sizeof(reachable));
+  mark_region(start, stackAddr + 1);
+  chunk_list_dump(&alloc_chunks);
+  ChunkList tmp_chunks = {0};
+  // make thy unborn whose souls belong not here
+  for (size_t i = 0; i < alloc_chunks.count; i++) {
+    if (!reachable[i]) {
+      chunk_list_insert(&tmp_chunks, alloc_chunks.chunks[i].start,
+                        alloc_chunks.chunks[i].size);
+    }
+  }
+  // let thy be loose,unfortunates
+  for (size_t i = 0; i < tmp_chunks.count; i++) {
+    alloc_free(tmp_chunks.chunks[i].start);
+  }
+  chunk_list_dump(&alloc_chunks);
 }

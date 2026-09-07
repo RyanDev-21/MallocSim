@@ -32,19 +32,17 @@ void print_tree(Node const *root) {
 /* int write_file(const char *filename, ) {} */
 
 int main() {
+  stackAddr = (const uintptr_t *)__builtin_frame_address(0);
+  for (int i = 0; i < 10; i++) {
+    heap_alloc(i);
+  }
   Node *root = generate_tree(0, 3);
   print_tree(root);
-  printf("................\n");
-  int count = 0;
-  for (size_t i = 0; i < alloc_chunks.count; i++) {
-    for (size_t j = 0; j < alloc_chunks.chunks[i].size; j++) {
-      uintptr_t *p = (uintptr_t *)alloc_chunks.chunks[i].start[j];
-      if (heap <= p && p < heap + HEAP_CAP_WORDS) {
-        count++;
-      };
-    }
-  }
-  printf("count of allocated heap:%d\n", count);
-
+  printf("\nroot pointer value:%p\n", (void *)root);
+  printf("\n");
+  heap_collect();
+  root = NULL;
+  heap_collect();
+  printf("\n-----------------\n");
   return 0;
 }
